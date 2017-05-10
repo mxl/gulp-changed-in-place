@@ -4,19 +4,19 @@ var through = require('through2');
 var GLOBAL_CACHE = {};
 
 // look for changes by mtime
-function processFileByModifiedTime(stream, firstPass, file, cache) {
+function processFileByModifiedTime(stream, force, file, cache) {
   var newTime = file.stat && file.stat.mtime;
   var oldTime = cache[file.path];
 
   cache[file.path] = newTime.getTime();
 
-  if ((!oldTime && firstPass) || (oldTime && oldTime !== newTime.getTime())) {
+  if (force || !oldTime || oldTime !== newTime.getTime()) {
     stream.push(file);
   }
 }
 
 // look for changes by sha1 hash
-function processFileBySha1Hash(stream, firstPass, file, cache) {
+function processFileBySha1Hash(stream, force, file, cache) {
   // null cannot be hashed
   if (file.contents === null) {
     // if element is really a file, something weird happened, but it's safer
@@ -31,7 +31,7 @@ function processFileBySha1Hash(stream, firstPass, file, cache) {
 
     cache[file.path] = newHash;
 
-    if ((!currentHash && firstPass) || (currentHash && currentHash !== newHash)) {
+    if (force || !currentHash || currentHash !== newHash) {
       stream.push(file);
     }
   }
@@ -54,10 +54,10 @@ module.exports = function (options) {
   }
 
   var cache = options.cache || GLOBAL_CACHE;
-  var firstPass = options.firstPass === true;
+  var force = options.force === true;
 
   return through.obj(function (file, encoding, callback) {
-    processFile(this, firstPass, file, cache);
+    processFile(this, force, file, cache);
     callback();
   });
 }
