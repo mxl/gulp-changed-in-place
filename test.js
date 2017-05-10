@@ -56,7 +56,7 @@ describe('gulp-changed-in-place', function () {
         .pipe(es.map(function (file, callback) {
           // imitate gulp.dest without actualy writing files
           // @see https://github.com/gulpjs/vinyl-fs/blob/master/lib/prepareWrite.js#L24
-          var targetBase = path.resolve(file.cwd, './build')
+          var targetBase = path.resolve(file.cwd, './build');
           var targetPath = path.resolve(targetBase, file.relative);
           file.base = targetBase;
           file.path = targetPath;
@@ -67,6 +67,26 @@ describe('gulp-changed-in-place', function () {
 
           files.map(function (file) {
             assert.equal(undefined, shas[file.path], 'path of changed file should not be in cache');
+          });
+
+          done();
+        }));
+    });
+
+    it('should use paths relative to `basePath`', function (done) {
+      var shas = {};
+      var basePath = __dirname;
+
+      gulp.src('fixture/*')
+        .pipe(changedInPlace({
+          firstPass: true,
+          basePath: basePath,
+          cache: shas
+        }))
+        .pipe(concatStream(function (files) {
+
+          files.map(function (file) {
+            assert.equal(true, shas.hasOwnProperty(path.relative(basePath, file.path)), 'file path should be relative');
           });
 
           done();
@@ -111,9 +131,8 @@ describe('gulp-changed-in-place', function () {
 
       var timeNow = Date.now() / 1000;  // https://nodejs.org/docs/latest/api/fs.html#fs_fs_utimes_path_atime_mtime_callback
 
-      var currentYear = new Date().getFullYear();
-      var yesterYear = currentYear - 1;
-      var timeThen = new Date().setFullYear(yesterYear);
+      var timeThen = new Date();
+      timeThen.setFullYear(timeThen.getFullYear() - 1);
 
       var fileBTime = fs.statSync(fileB).mtime;
       fs.utimesSync(fileA, timeNow, timeNow);
@@ -146,7 +165,7 @@ describe('gulp-changed-in-place', function () {
         .pipe(es.map(function (file, callback) {
           // imitate gulp.dest without actualy writing files
           // @see https://github.com/gulpjs/vinyl-fs/blob/master/lib/prepareWrite.js#L24
-          var targetBase = path.resolve(file.cwd, './build')
+          var targetBase = path.resolve(file.cwd, './build');
           var targetPath = path.resolve(targetBase, file.relative);
           file.base = targetBase;
           file.path = targetPath;
@@ -157,6 +176,27 @@ describe('gulp-changed-in-place', function () {
 
           files.map(function (file) {
             assert.equal(undefined, times[file.path], 'path of changed file should not be in cache');
+          });
+
+          done();
+        }));
+    });
+
+    it('should use paths relative to `basePath`', function (done) {
+      var times = {};
+      var basePath = __dirname;
+
+      gulp.src('fixture/*')
+        .pipe(changedInPlace({
+          firstPass: true,
+          basePath: basePath,
+          cache: times,
+          howToDetermineDifference: 'modification-time'
+        }))
+        .pipe(concatStream(function (files) {
+
+          files.map(function (file) {
+            assert.equal(true, times.hasOwnProperty(path.relative(basePath, file.path)), 'file path should be relative');
           });
 
           done();
