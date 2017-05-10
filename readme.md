@@ -37,11 +37,11 @@ gulp.task('default', function () {
 
 ### changed(options)
 
-#### `firstPass`
+#### `force`
 * `boolean`
 * Default = `false`
 
-  Makes `gulp-changed-in-place` pass through all files once on the first run.
+  Forces `gulp-changed-in-place` to pass through all files.
 
 #### `cache`
 * `Object` 
