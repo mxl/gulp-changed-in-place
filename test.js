@@ -6,15 +6,13 @@ var es = require('event-stream');
 var gulp = require('gulp');
 var changedInPlace = require('./');
 
-var filledCache = {
-};
-
 describe('gulp-changed-in-place', function () {
-
   describe('when comparing by sha1 hash', function () {
-    it('passes all files on start with empty cache', function (done) {
+    it('passes all files with empty cache', function (done) {
       gulp.src('fixture/*')
-        .pipe(changedInPlace({ cache: filledCache }))
+        .pipe(changedInPlace({
+          cache: {}
+        }))
         .pipe(concatStream(function (buf) {
           assert.equal(2, buf.length);
           assert.equal('a', path.basename(buf[0].path));
@@ -23,11 +21,35 @@ describe('gulp-changed-in-place', function () {
         }));
     });
 
-    it('does not pass all files on start by default', function (done) {
+    it('does not pass all files with filled cache', function (done) {
+      var shas = {};
       gulp.src('fixture/*')
-        .pipe(changedInPlace({ force: false, cache: {} }))
+        .pipe(changedInPlace({
+          cache: shas
+        }))
+        .pipe(changedInPlace({
+          cache: shas
+        }))
         .pipe(concatStream(function (buf) {
           assert.equal(0, buf.length);
+          done();
+        }));
+    });
+
+    it('passes all files with filled cache and `force: true`', function (done) {
+      var shas = {};
+      gulp.src('fixture/*')
+        .pipe(changedInPlace({
+          cache: shas
+        }))
+        .pipe(changedInPlace({
+          cache: shas,
+          force: true
+        }))
+        .pipe(concatStream(function (buf) {
+          assert.equal(2, buf.length);
+          assert.equal('a', path.basename(buf[0].path));
+          assert.equal('b', path.basename(buf[1].path));
           done();
         }));
     });
@@ -39,7 +61,7 @@ describe('gulp-changed-in-place', function () {
       shas[path.join(__dirname, 'fixture/b')] = 'e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98';
 
       gulp.src('fixture/*')
-        .pipe(changedInPlace({ force: false, cache: shas }))
+        .pipe(changedInPlace({ cache: shas }))
         .pipe(concatStream(function (buf) {
           assert.equal(1, buf.length);
           assert.equal('a', path.basename(buf[0].path));
@@ -51,7 +73,9 @@ describe('gulp-changed-in-place', function () {
       var shas = {};
 
       gulp.src('fixture/*')
-        .pipe(changedInPlace({ force: true, cache: shas }))
+        .pipe(changedInPlace({
+          cache: shas
+        }))
         .pipe(es.map(function (file, callback) {
           // imitate gulp.dest without actualy writing files
           // @see https://github.com/gulpjs/vinyl-fs/blob/master/lib/prepareWrite.js#L24
@@ -78,7 +102,6 @@ describe('gulp-changed-in-place', function () {
 
       gulp.src('fixture/*')
         .pipe(changedInPlace({
-          firstPass: true,
           basePath: basePath,
           cache: shas
         }))
@@ -94,10 +117,9 @@ describe('gulp-changed-in-place', function () {
   });
 
   describe('when comparing by file modification time: ', function () {
-    it('passes all files on start by default', function (done) {
+    it('passes all files with empty cache', function (done) {
       gulp.src('fixture/*')
         .pipe(changedInPlace({
-          force: true,
           cache: {},
           howToDetermineDifference: 'modification-time'
         }))
@@ -109,11 +131,33 @@ describe('gulp-changed-in-place', function () {
         }));
     });
 
-    it('passes all files on start with `force: false`', function (done) {
+    it('does not pass all files with filled cache', function (done) {
+      var times = {};
       gulp.src('fixture/*')
         .pipe(changedInPlace({
-          force: false,
-          cache: {},
+          cache: times,
+          howToDetermineDifference: 'modification-time'
+        }))
+        .pipe(changedInPlace({
+          cache: times,
+          howToDetermineDifference: 'modification-time'
+        }))
+        .pipe(concatStream(function (buf) {
+          assert.equal(0, buf.length);
+          done();
+        }));
+    });
+
+    it('passes all files with filled cache and `force: true`', function (done) {
+      var times = {};
+      gulp.src('fixture/*')
+        .pipe(changedInPlace({
+          cache: times,
+          howToDetermineDifference: 'modification-time'
+        }))
+        .pipe(changedInPlace({
+          force: true,
+          cache: times,
           howToDetermineDifference: 'modification-time'
         }))
         .pipe(concatStream(function (buf) {
@@ -141,7 +185,6 @@ describe('gulp-changed-in-place', function () {
 
       gulp.src('fixture/*')
         .pipe(changedInPlace({
-          force: false,
           cache: times,
           howToDetermineDifference: 'modification-time'
         }))
@@ -157,7 +200,6 @@ describe('gulp-changed-in-place', function () {
 
       gulp.src('fixture/*')
         .pipe(changedInPlace({
-          force: true,
           cache: times,
           howToDetermineDifference: 'modification-time'
         }))
