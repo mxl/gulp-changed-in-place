@@ -6,12 +6,15 @@ var es = require('event-stream');
 var gulp = require('gulp');
 var changedInPlace = require('./');
 
+var filledCache = {
+};
+
 describe('gulp-changed-in-place', function () {
 
   describe('when comparing by sha1 hash', function () {
-    it('passes all files on start by default', function (done) {
+    it('passes all files on start with empty cache', function (done) {
       gulp.src('fixture/*')
-        .pipe(changedInPlace({ firstPass: true, cache: {} }))
+        .pipe(changedInPlace({ cache: filledCache }))
         .pipe(concatStream(function (buf) {
           assert.equal(2, buf.length);
           assert.equal('a', path.basename(buf[0].path));
@@ -20,9 +23,9 @@ describe('gulp-changed-in-place', function () {
         }));
     });
 
-    it('does not pass all files on start with `firstPass: false`', function (done) {
+    it('does not pass all files on start by default', function (done) {
       gulp.src('fixture/*')
-        .pipe(changedInPlace({ firstPass: false, cache: {} }))
+        .pipe(changedInPlace({ force: false, cache: {} }))
         .pipe(concatStream(function (buf) {
           assert.equal(0, buf.length);
           done();
@@ -36,7 +39,7 @@ describe('gulp-changed-in-place', function () {
       shas[path.join(__dirname, 'fixture/b')] = 'e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98';
 
       gulp.src('fixture/*')
-        .pipe(changedInPlace({ firstPass: false, cache: shas }))
+        .pipe(changedInPlace({ force: false, cache: shas }))
         .pipe(concatStream(function (buf) {
           assert.equal(1, buf.length);
           assert.equal('a', path.basename(buf[0].path));
@@ -48,7 +51,7 @@ describe('gulp-changed-in-place', function () {
       var shas = {};
 
       gulp.src('fixture/*')
-        .pipe(changedInPlace({ firstPass: true, cache: shas }))
+        .pipe(changedInPlace({ force: true, cache: shas }))
         .pipe(es.map(function (file, callback) {
           // imitate gulp.dest without actualy writing files
           // @see https://github.com/gulpjs/vinyl-fs/blob/master/lib/prepareWrite.js#L24
@@ -94,7 +97,7 @@ describe('gulp-changed-in-place', function () {
     it('passes all files on start by default', function (done) {
       gulp.src('fixture/*')
         .pipe(changedInPlace({
-          firstPass: true,
+          force: true,
           cache: {},
           howToDetermineDifference: 'modification-time'
         }))
@@ -106,15 +109,15 @@ describe('gulp-changed-in-place', function () {
         }));
     });
 
-    it('does not pass all files on start with `firstPass: false`', function (done) {
+    it('passes all files on start with `force: false`', function (done) {
       gulp.src('fixture/*')
         .pipe(changedInPlace({
-          firstPass: false,
+          force: false,
           cache: {},
           howToDetermineDifference: 'modification-time'
         }))
         .pipe(concatStream(function (buf) {
-          assert.equal(0, buf.length);
+          assert.equal(2, buf.length);
           done();
         }));
     });
@@ -138,7 +141,7 @@ describe('gulp-changed-in-place', function () {
 
       gulp.src('fixture/*')
         .pipe(changedInPlace({
-          firstPass: false,
+          force: false,
           cache: times,
           howToDetermineDifference: 'modification-time'
         }))
@@ -154,7 +157,7 @@ describe('gulp-changed-in-place', function () {
 
       gulp.src('fixture/*')
         .pipe(changedInPlace({
-          firstPass: true,
+          force: true,
           cache: times,
           howToDetermineDifference: 'modification-time'
         }))
