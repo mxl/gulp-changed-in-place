@@ -1,3 +1,5 @@
+'use strict';
+
 var crypto = require('crypto');
 var path = require('path');
 var through = require('through2');
@@ -64,4 +66,4 @@ module.exports = function (options) {
     processFile(this, firstPass, basePath, file, cache);
     callback();
   });
-}
+};

@@ -13,6 +13,7 @@
     "node": ">=0.10.0"
   },
   "scripts": {
+    "lint": "jshint *.js",
     "test": "mocha"
   },
   "files": [
@@ -41,6 +42,7 @@
     "concat-stream": "^1.4.6",
     "event-stream": "^3.3.2",
     "gulp": "^3.0.0",
+    "jshint": "^2.9.5",
     "mocha": "^3.5.3"
   }
 }
